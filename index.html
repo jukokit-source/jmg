@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIチャット create by juko</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --white: #ffffff;
+    --blue: #3b82f6;
+    --blue-light: #eff6ff;
+    --sky: #0ea5e9;
+    --text: #1e293b;
+    --muted: #94a3b8;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    z-index: 10;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  .model-pill {
+    background: var(--blue-light);
+    color: var(--blue);
+    border: 1px solid #bfdbfe;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .model-pill select {
+    background: transparent;
+    border: none;
+    color: var(--blue);
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+  }
+
+  #chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .welcome { text-align: center; padding: 40px 20px; }
+
+  .welcome-icon {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 24px rgba(59,130,246,0.25);
+  }
+
+  .welcome h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .welcome p { color: var(--muted); font-size: 14px; line-height: 1.8; }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 24px;
+  }
+
+  .sug-btn {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: var(--shadow);
+  }
+
+  .sug-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-light); }
+
+  .msg { display: flex; gap: 10px; animation: fadeUp 0.2s ease; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(6px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  .msg.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .msg.user .avatar {
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    color: white;
+    font-size: 11px;
+  }
+
+  .msg.ai .avatar {
+    background: var(--white);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    font-size: 15px;
+  }
+
+  .bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    max-width: 600px;
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: var(--shadow);
+  }
+
+  .msg.user .bubble {
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    color: white;
+    border-radius: 16px 4px 16px 16px;
+  }
+
+  .msg.ai .bubble {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 4px 16px 16px 16px;
+  }
+
+  .thinking { display:flex; gap:5px; align-items:center; padding: 14px 16px; }
+  .thinking span {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--blue);
+    animation: bounce 1.2s infinite;
+  }
+  .thinking span:nth-child(2) { animation-delay:0.2s; background: var(--sky); }
+  .thinking span:nth-child(3) { animation-delay:0.4s; }
+
+  @keyframes bounce {
+    0%,60%,100% { transform:translateY(0); opacity:0.4; }
+    30% { transform:translateY(-7px); opacity:1; }
+  }
+
+  .input-area { padding: 12px 0 20px; }
+
+  .input-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 10px 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow-md);
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1), var(--shadow-md);
+  }
+
+  #userInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    outline: none;
+    resize: none;
+    max-height: 120px;
+    line-height: 1.6;
+    min-height: 22px;
+  }
+
+  #userInput::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--blue), var(--sky));
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+    font-weight: 700;
+    transition: opacity 0.2s, transform 0.1s;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+  }
+
+  .send-btn:hover { opacity:0.88; transform:scale(1.05); }
+  .send-btn:disabled { opacity:0.35; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .hint { text-align: center; font-size: 11px; color: var(--muted); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">💬</div>
+    AIチャット
+  </div>
+  <div class="model-pill">
+    🤖
+    <select id="modelSelect">
+      <option value="llama-3.3-70b-versatile">Llama 3.3 70B（推奨）</option>
+      <option value="llama-3.1-8b-instant">Llama 3.1 8B（超高速）</option>
+      <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+      <option value="gemma2-9b-it">Gemma 2 9B</option>
+    </select>
+  </div>
+</header>
+
+<div id="chat">
+  <div id="messages">
+    <div class="welcome">
+      <div class="welcome-icon">✨</div>
+      <h2>こんにちは！</h2>
+      <p>何でも気軽に聞いてください。<br>日本語でOKです。</p>
+      <div class="suggestions">
+        <button class="sug-btn" onclick="sendSuggestion('自己紹介して')">自己紹介して</button>
+        <button class="sug-btn" onclick="sendSuggestion('HTMLの書き方を教えて')">HTMLの書き方</button>
+        <button class="sug-btn" onclick="sendSuggestion('大学生におすすめのAIツールは？')">おすすめAIツール</button>
+        <button class="sug-btn" onclick="sendSuggestion('英語を勉強するコツを教えて')">英語の勉強法</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="userInput" placeholder="メッセージを入力..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+    </div>
+    <div class="hint">Enter で送信 · Shift+Enter で改行</div>
+  </div>
+</div>
+
+<script>
+  // ★ ここに新しいGroq APIキーを貼り付けてください
+  const API_KEY = 'YOUR_GROQ_API_KEY_HERE';
+
+  let messages = [];
+  let isLoading = false;
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  }
+
+  function sendSuggestion(text) {
+    document.getElementById('userInput').value = text;
+    sendMessage();
+  }
+
+  function appendMessage(role, content) {
+    const el = document.getElementById('messages');
+    const welcome = el.querySelector('.welcome');
+    if (welcome) welcome.remove();
+
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? 'YOU' : '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = content;
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function showThinking() {
+    const el = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'thinking';
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = '🤖';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble thinking';
+    bubble.innerHTML = '<span></span><span></span><span></span>';
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function removeThinking() {
+    const t = document.getElementById('thinking');
+    if (t) t.remove();
+  }
+
+  async function sendMessage() {
+    if (isLoading) return;
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    input.style.height = 'auto';
+    isLoading = true;
+    document.getElementById('sendBtn').disabled = true;
+
+    appendMessage('user', text);
+    messages.push({ role: 'user', content: text });
+    showThinking();
+
+    const model = document.getElementById('modelSelect').value;
+
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'あなたは親切で賢いAIアシスタントです。日本語で話しかけられたら日本語で答えてください。' },
+            ...messages
+          ],
+          max_tokens: 1024,
+          temperature: 0.7
+        })
+      });
+
+      const data = await res.json();
+      removeThinking();
+
+      if (data.error) {
+        appendMessage('ai', `エラー: ${data.error.message}`);
+      } else {
+        const reply = data.choices[0].message.content;
+        appendMessage('ai', reply);
+        messages.push({ role: 'assistant', content: reply });
+      }
+    } catch (err) {
+      removeThinking();
+      appendMessage('ai', 'エラーが発生しました。ネットワークを確認してください。');
+    }
+
+    isLoading = false;
+    document.getElementById('sendBtn').disabled = false;
+    document.getElementById('userInput').focus();
+  }
+</script>
+</body>
+</html>
